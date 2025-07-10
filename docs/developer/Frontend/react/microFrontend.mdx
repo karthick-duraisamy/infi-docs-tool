@@ -1,0 +1,122 @@
+---
+title: Micro Frontend
+---
+
+# Micro Frontend(Static Integration via Library Build)
+
+## 📦 Integrating a Vite + TypeScript React App Inside Another (Without iframe)
+
+This guide shows how to import and use a built Vite+React app (Mailer engine) inside another Vite+React app (Mailer template) **without using an iframe**, using a library build approach with TypeScript support.
+
+---
+
+### 📁 Project Setup
+
+#### ✅ Mailer template
+
+- Main host app  
+- Needs to embed Mailer engine as a component
+
+#### ✅ Mailer engine
+
+- The sub-app you want to build and embed into Mailer template  
+- Build it as a library (ES module)
+
+---
+
+### 🧱 Step 1: Build Mailer engine as a Library
+
+In **Mailer engine**, update `vite.config.ts`:
+
+```ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    lib: {
+      entry: './src/exported.tsx',
+      name: 'mailerEngine',
+      fileName: 'mailer-engine',
+      formats: ['es'],
+    },
+    rollupOptions: {
+      external: ['react', 'react-dom'],
+      output: {
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM',
+        },
+      },
+    },
+  },
+});
+```
+
+### 📤 Step 2: Create the export entry
+
+```tsx
+// src/exported.tsx (Mailer engine)
+import React from 'react';
+import App from './App';
+
+const mailerEngine: React.FC = () => <App />;
+export default mailerEngine;
+```
+
+### 🛠️ step 3: Build Mailer engine
+
+```tsx
+npm run build
+```
+or
+```tsx
+yarn run build
+```
+
+### 📂 step 4: Copy build output into Mailer template
+
+Copy dist/mailer-engine.js (and style.css, if any) into Mailer template:
+
+```
+Mailer template
+└── src/
+    └── lib/
+        └── mailer-engine/
+            ├── mailer-engine.js
+            └── style.css (optional)
+```
+
+### 🧩 step 5: Use Mailer engine in Mailer template
+
+In src/component/sample.tsx:
+
+```tsx
+import React from 'react';
+import mailerEngine from '../../../lib/mailer-engine/mailer-engine.js';
+import '../../../lib/mailer-engine/style.css'; // if present
+
+const Sample = () => {
+  return (
+    <div>
+      <h2>Main Tracking Page</h2>
+      <mailerEngine />
+    </div>
+  );
+};
+
+export default Sample;
+```
+
+### ♻️ Step 6: Restart Everything
+
+Restart your Vite dev server:
+
+```bash
+npm run dev
+```
+or
+```bash
+yarn run dev
+```

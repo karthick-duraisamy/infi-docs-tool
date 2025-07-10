@@ -1,0 +1,698 @@
+## 🚀 Features
+
+- 🔐 Role-based document access
+- ⚛️ Built with React + TypeScript
+- 📄 Easy content management via Markdown
+- 🎨 Customizable themes and layout
+- 🧩 Plugin support (client redirects, translations, etc.)
+- 📦 One-click build & deploy scripts
+
+---
+
+## 📁 Folder Structure
+
+```text
+docs-tool/
+├── docs/ # Documentation content (Markdown)
+├── src/ # Source code (components, auth logic, etc.)
+├── static/ # Static assets (images, etc.)
+├── blog/ # Blog content (if used)
+├── scripts/ # Utility scripts (doc generation)
+├── .docusaurus/ # Docusaurus cache/build files
+├── docusaurus.config.ts # Site configuration
+├── sidebars.ts # Sidebar layout
+├── package.json # Dependencies and scripts
+```
+---
+
+## ⚙️ Installation
+
+Make sure you have **Node.js (>=14)** and **npm** installed.
+
+```bash
+cd docs-tool
+```
+```bash
+npm install
+```
+
+---
+
+## 📦 Available Scripts
+
+All commands are defined in package.json.
+
+| Script              | Description                                   |
+| ------------------- | --------------------------------------------- |
+| `npm start`         | Generates doc metadata and starts dev server  |
+| `npm run build`     | Builds the static site                        |
+| `npm run serve`     | Serves the built site locally                 |
+| `npm run deploy`    | Deploys the site (configure deployment first) |
+| `npm run clear`     | Clears Docusaurus cache                       |
+| `npm run typecheck` | Type-checks the TypeScript code               |
+| `npm run swizzle`   | Customize theme components                    |
+
+---
+
+## 🔐 Role-Based Auth (Overview)
+
+> *Assumes role logic is implemented under `src/`*
+
+This project includes a simple client-side role-based access control system for documentation.
+
+### 👤 How It Works
+
+- Upon login, a user's role (e.g., `superadmin`, `developer`, `client`) is stored in `localStorage` or managed via React context.
+- Docusaurus routes and sidebar items are dynamically filtered based on the user's role.
+
+### 🧭 Access Rules
+
+| Role        | Access Level                    |
+|-------------|----------------------------------|
+| `superadmin`| Full access to all documentation |
+| `developer` | Access to developer docs         |
+| `client`    | Access to client-facing docs     |
+
+### 🛠️ Customize Role Access
+
+You can modify access control logic in the following files:
+
+- `src/components/RequireAuth.tsx` — Handles route guarding
+- `src/context/RoleContext.tsx` — Stores and provides user role
+- `sidebars.ts` — Optionally control what content appears per role
+
+Make sure to handle unauthorized access by redirecting users or hiding restricted content.
+
+---
+
+## 🌐 Customization
+
+You can tailor the look, feel, and behavior of your Docusaurus site using the following files:
+
+### 🔧 `docusaurus.config.ts`
+
+- Change the **site title**, **tagline**, or **favicon**
+- Configure or add **plugins** (e.g., redirects, analytics)
+- Customize the **navbar**, **footer**, and **theme settings**
+- Set up deployment options (e.g., GitHub Pages, Netlify)
+
+### 📚 `sidebars.ts`
+
+- Define the structure and grouping of your docs
+- Show/hide sections based on your organization’s needs
+
+### 🎨 `src/theme/`
+
+- Override default Docusaurus components (e.g., `Navbar`, `DocItem`, `Layout`)
+- Implement custom layout or styling
+- Use React and TypeScript to create highly customized components
+
+Make sure to restart the dev server after making configuration changes:
+
+```bash
+npm start
+```
+
+---
+
+## 📥 Dependencies
+
+This project uses the following core libraries and tools:
+
+### 🧩 Core Libraries
+
+- [`@docusaurus/core`](https://www.npmjs.com/package/@docusaurus/core)
+- [`@docusaurus/preset-classic`](https://www.npmjs.com/package/@docusaurus/preset-classic)
+- [`react`](https://reactjs.org/)
+- [`react-dom`](https://reactjs.org/docs/react-dom.html)
+- [`typescript`](https://www.typescriptlang.org/)
+
+### 🎨 Styling & Utility
+
+- [`clsx`](https://www.npmjs.com/package/clsx) – Utility for conditional classNames
+- [`prism-react-renderer`](https://www.npmjs.com/package/prism-react-renderer) – Code syntax highlighting
+
+### 🎠 Carousel Support
+
+- [`react-slick`](https://react-slick.neostack.com/) – React component for carousels/sliders
+- [`slick-carousel`](https://www.npmjs.com/package/slick-carousel) – Styles required for react-slick
+
+To install all dependencies:
+
+```bash
+npm install
+```
+
+---
+
+## 🧠 Code-wise Explanation
+
+This section explains how role-based routing and documentation filtering are implemented using React, Docusaurus, and TypeScript.
+
+---
+
+### 1️⃣ Role Context Setup
+
+`src/context/RoleContext.tsx`  
+
+Provides global access to the current user role.
+
+```tsx
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+const RoleContext = createContext<{
+  role: string | null;
+  setRole: (role: string | null) => void;
+}>({ role: null, setRole: () => {} });
+
+export const useRole = () => useContext(RoleContext);
+
+export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem('role');
+    if (storedRole) setRole(storedRole);
+  }, []);
+
+  return <RoleContext.Provider value={{ role, setRole }}>{children}</RoleContext.Provider>;
+};
+```
+
+---
+
+### 2️⃣ RequireAuth Component
+
+This component protects client-side routes by checking if the user is authenticated. If not, it redirects them to an `/unauthorized` page, preserving their intended destination.
+
+#### 📄 File: `src/components/RequireAuth.tsx`
+
+```tsx
+import React from 'react';
+import { Redirect } from '@docusaurus/router';
+import config from '@site/src/config.json';
+
+export default function RequireAuth({ children }: { children: React.ReactNode }) {
+  if (typeof window === 'undefined') return null;
+
+  const allowedDocsByRole: Record<string, string[]> = config.allowedDocsByRole;
+  const allowedDirsByRole: Record<string, string[]> = config.allowedDirsByRole;
+  const auth = localStorage.getItem('auth') === 'true';
+  const role = localStorage.getItem('role') || '';
+  const path = window.location.pathname;
+
+  const isLoginPage = path.startsWith('/login');
+  const isDocs = path.startsWith('/docs/');
+
+  // Redirect to login if not authed
+  if (!auth && !isLoginPage) {
+    const from = encodeURIComponent(path + window.location.search);
+    return <Redirect to={`/login?from=${from}`} />;
+  }
+
+  // Restrict docs by role
+  if (path.startsWith('/docs/')) {
+    const parts = path.split('/');
+    let section = '';
+    let docId = '';
+
+    // Handle /docs/intro, /docs/developer/dev-guide, /docs/category/client/xyz
+    if (parts[2] === 'category' && parts.length >= 4) {
+    section = parts[3]; // ← developer, client, etc.
+    } else if (parts.length === 3) {
+    docId = parts[2]; // e.g. intro
+    } else if (parts.length >= 4) {
+    section = parts[2];
+    }
+
+    const allowedDirs = allowedDirsByRole[role] || [];
+    const allowedDocs = allowedDocsByRole[role] || [];
+
+    const isSectionAllowed = section && allowedDirs.includes(section);
+    const isDocAllowed = docId && allowedDocs.includes(docId);
+
+
+    if (!isSectionAllowed && !isDocAllowed) {
+    return (
+        <div style={{ padding: '4rem', textAlign: 'center' }}>
+        <h1>🚫 Access Denied</h1>
+        <p>You do not have permission to view this documentation.</p>
+        </div>
+    );
+    }
+  }
+
+  return <>{children}</>;
+}
+```
+
+---
+
+### 3️⃣ Role-based Docs Filtering
+
+This logic ensures that users only see the documentation sections relevant to their role in the sidebar.
+
+#### 📄 File: `src/theme/DocSidebarItems/index.tsx`
+
+```tsx
+import React from 'react';
+import { useRole } from '@site/src/context/RoleContext';
+import OriginalDocSidebarItems from '@theme-original/DocSidebarItems';
+import config from "@site/src/config.json"
+
+// Define allowed directories for each role
+const allowedDirsByRole = config.allowedDirsByRole;
+
+// Extract the top-level directory (e.g., "client" from "client/guide")
+function getItemDir(item) {
+  if (item.type === 'link' && item.docId) {
+    const parts = item.docId.split('/');
+    return parts.length > 1 ? parts[0] : 'public';
+  }
+
+  return null;
+}
+
+
+// Recursively filter sidebar items based on allowed dirs
+function filterItems(items, allowedDirs) {
+  return items
+    .map((item) => {
+      if (item.type === 'category') {
+        const filteredChildren = filterItems(item.items || [], allowedDirs);
+
+        // Only keep category if it has allowed children
+        if (filteredChildren.length > 0) {
+          return { ...item, items: filteredChildren };
+        }
+
+        return null;
+      }
+
+      // For links, check docId-based folder
+      const dir = getItemDir(item);
+      return allowedDirs.includes(dir) ? item : null;
+    })
+    .filter(Boolean);
+}
+
+
+export default function DocSidebarItems({ items, ...props }) {
+  const { role } = useRole();
+
+  if (!role || !Array.isArray(items)) return null;
+
+  const allowedDirs = allowedDirsByRole[role] || [];
+
+  const filteredItems = filterItems(items, allowedDirs);
+
+  return <OriginalDocSidebarItems items={filteredItems} {...props} />;
+}
+```
+
+---
+
+### 4️⃣ Sidebar Access Based on Role
+
+The sidebar is dynamically generated at runtime using the filtered items returned by the custom `DocSidebarItemsWrapper`.
+
+Users only see the documentation items they are authorized to access based on their role.
+
+#### ✅ No changes needed in `sidebars.ts`
+
+---
+
+### 5️⃣ Global Auth & Role Context via Layout Wrapper
+
+To ensure all pages (including docs) respect authentication and role context, the default Docusaurus layout is wrapped with both `RequireAuth` and `RoleProvider`.
+
+#### 📄 File: `src/theme/Layout/index.tsx`
+
+```tsx
+import React from 'react';
+import OriginalLayout from '@theme-original/Layout';
+import RequireAuth from '../../components/RequireAuth'; // your redirect logic
+import { RoleProvider } from '../../context/RoleContext'; // your context
+
+export default function Layout(props) {
+  return (
+    <RoleProvider>
+      <RequireAuth>
+        <OriginalLayout {...props} />
+      </RequireAuth>
+    </RoleProvider>
+  );
+}
+```
+
+---
+
+### 6️⃣ Dynamic Home Page Based on Role
+
+The home page displays available documentation links and custom content depending on the logged-in user's role.
+
+#### 📄 File: `src/pages/index.tsx`
+
+```tsx
+import React, { ComponentType, SVGProps } from 'react';
+import Layout from '@theme/Layout';
+import Link from '@docusaurus/Link';
+import docMeta from '@site/src/docMeta.json';
+import HandGlobe from '@site/static/img/handglobe.svg';
+import HandShake from '@site/static/img/handshake.svg';
+import GroupPeople from '@site/static/img/grouppeople.svg';
+import Card from '../components/card';
+import config from '@site/src/config.json';
+
+const allowedDirsByRole = config.allowedDirsByRole;
+
+export default function HomePage() {
+  const role = localStorage.getItem("role");
+  const resolvedRole = role;
+
+  const filteredDocs = docMeta.filter((doc) =>
+    allowedDirsByRole[resolvedRole]?.includes(doc.folder)
+  );
+
+  const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+    HandGlobe,
+    HandShake,
+    GroupPeople,
+  };
+  
+  const cardData = config.cardData.map(card => ({
+    ...card,
+    svg: iconMap[card.svg],
+  }));
+
+  const subSectionData = config.subSectionData;
+
+  return (
+    <Layout title="Welcome">
+      <main style={{ padding: '1.25rem' }}>
+        <div className="cls-footer-content-container">
+          <div className="cls-footer-content">
+            <h1>👋 Hi, {resolvedRole !== 'guest' ? `${resolvedRole}` : ''}</h1>
+            <p>Here is your available docs:</p>
+
+            {filteredDocs.length ? (
+              <ul>
+                {filteredDocs.map((doc) => (
+                  <li key={doc.docId}>
+                    <Link to={`/docs/${doc.docId}`}>{doc.title}</Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No docs available for your role.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Introductory section */}
+        <div className='cls-home-container'>
+          <div className="cls-home-content">
+            <h1>Who We Are</h1>
+            <p>
+              At Infiniti, our mission is clear: to simplify and elevate the travel industry through continuous innovation and unwavering dedication.
+              Join us in shaping the future of travel technology – together.
+            </p>
+          </div>
+        </div>
+
+        {/* Feature cards */}
+        <div className="cls-home-cards">
+          {cardData.map((card, index) => (
+            <Card
+              key={index}
+              svg={card.svg}
+              className='cls-card'
+              title={card.title}
+              description={card.description}
+            />
+          ))}
+        </div>
+
+        {/* Subsection section */}
+        <div className="cls-home-benefits-container">
+          <div className="cls-home-benefits">
+            <p className='cls-home-benefits-title'>{subSectionData.title}</p>
+            <h1 className='cls-home-benefits-header'>{subSectionData.header}</h1>
+            <div className="cls-home-benefits-cover">
+              {subSectionData.data.map((sub, index) => (
+                <div key={index} className="cls-home-benefits-content">
+                  <h3>{sub.title}</h3>
+                  <p>{sub.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    </Layout>
+  );
+}
+```
+
+---
+
+### 7️⃣ Custom `Card` Component with SVG Support
+
+This reusable UI component displays a card with a title, description, and a dynamically rendered SVG icon. It's used on the home page to visually represent key features.
+
+#### 📄 File: `src/components/card.tsx`
+
+```tsx
+import React from 'react';
+import { ComponentType, SVGProps } from 'react';
+import SvgRenderer from './SvgRenderer';
+
+type CardProps = {
+  svg: ComponentType<SVGProps<SVGSVGElement>>;
+  title: string;
+  description: string;
+  className?: string;
+};
+
+const Card: React.FC<CardProps> = ({ svg, title, description, className = '' }) => {
+  return (
+    <div
+      className={className}
+      style={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      }}
+    >
+      <div style={{ marginBottom: '16px' }}>
+        <SvgRenderer component={svg} className="svg-icon" />
+      </div>
+      <h3 style={{ marginBottom: '8px', fontSize: '1.25rem' }}>{title}</h3>
+      <p style={{ color: '#555', fontSize: '0.95rem' }}>{description}</p>
+    </div>
+  );
+};
+
+export default Card;
+```
+
+---
+
+### 8️⃣ SVG Renderer Utility Component
+
+The `SvgRenderer` is a utility component designed to render SVG components dynamically, improving reusability and type safety for icons across the app.
+
+#### 📄 File: `src/components/SvgRenderer.tsx`
+
+```tsx
+import { ComponentType, SVGProps } from 'react';
+
+type SvgRendererProps = {
+  component: ComponentType<SVGProps<SVGSVGElement>>;
+  className?: string;
+};
+
+const SvgRenderer = ({ component: Component, className = '' }: SvgRendererProps) => {
+  return <Component className={className} />;
+};
+
+export default SvgRenderer;
+```
+
+---
+
+### 9️⃣ Login Page with Role-Based Authentication
+
+This component provides a basic login UI and handles authentication and role assignment using a dummy user list from config. Upon successful login, the user's role is stored and applied across the app.
+
+#### 📄 File: `src/pages/login.tsx`
+
+```tsx
+import { useHistory } from "@docusaurus/router";
+import { useEffect, useState } from "react";
+import styles from './index.module.css';
+import SvgRenderer from "../components/SvgRenderer";
+import infinitiLogo from "../../static/img/infiniti.svg";
+import cShape from "../../static/img/Groupcshape.svg";
+import infiniti20 from "../../static/img/20-years-infiniti-logo.svg";
+import { useRole } from "../context/RoleContext";
+import config from "@site/src/config.json";
+
+const dummyUsers = config.dummyUsers;
+
+export default function Login() {
+  const history = useHistory();
+  const { setRole } = useRole();
+  const [user, setUser] = useState('');
+  const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem("auth", "false"); // Reset auth on load
+  }, []);
+
+  const handleSubmit = () => {
+    const matchedUser = dummyUsers.find(
+      (u) => u.username === user && u.password === password
+    );
+    if (matchedUser) {
+      localStorage.setItem("auth", "true");
+      localStorage.setItem("role", matchedUser.role);
+      localStorage.setItem("user", JSON.stringify(matchedUser));
+      setRole(matchedUser.role); // ✅ update context
+      history.push("/");
+    }
+  };
+
+  return (
+    <div className={styles.loginPage}>
+      <p className="logo">docs<span>tool</span></p>
+      <SvgRenderer component={infiniti20} className="logo-right" />
+      <div className={styles.loginContainer}>
+        <h3>
+          <SvgRenderer component={infinitiLogo} />
+          <span className={styles.loginTitle}>Login</span>
+        </h3>
+        <label htmlFor="user">User name</label>
+        <input
+          type="text"
+          id="user"
+          placeholder="Username"
+          value={user}
+          onChange={(e) => setUser(e.target.value)}
+        />
+        <label htmlFor="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button className={styles.forgetButton}>Forget password?</button>
+        <button className={styles.loginButton} onClick={handleSubmit}>
+          Sign in
+        </button>
+      </div>
+
+      {/* Background animation SVGs */}
+      <SvgRenderer component={cShape} className={styles.cshape} />
+      <SvgRenderer component={cShape} className={styles.cshape1} />
+      <SvgRenderer component={cShape} className={styles.cshape2} />
+      <SvgRenderer component={cShape} className={styles.cshape3} />
+      <SvgRenderer component={cShape} className={styles.cshape4} />
+      <SvgRenderer component={cShape} className={styles.cshape5} />
+      <SvgRenderer component={cShape} className={styles.cshape6} />
+      <SvgRenderer component={cShape} className={styles.cshape7} />
+    </div>
+  );
+}
+```
+
+---
+
+### 🔟 Auto-Generate `docMeta.json` for Role-Based Access
+
+This Node.js script scans your `/docs` directory, extracts metadata (like title and folder name), and generates a `docMeta.json` file. This file is then used in the homepage to show allowed docs per role.
+
+#### 📄 File: `scripts/generateDocMeta.js`
+
+```js
+const fs = require('fs');
+const path = require('path');
+const matter = require('gray-matter');
+
+const docsDir = path.join(__dirname, '../docs');
+const outputPath = path.join(__dirname, '../src/docMeta.json');
+
+function getAllDocs(dir, base = '') {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  let docs = [];
+
+  entries.forEach((entry) => {
+    const fullPath = path.join(dir, entry.name);
+    const relativePath = path.join(base, entry.name);
+
+    if (entry.isDirectory()) {
+      docs = docs.concat(getAllDocs(fullPath, relativePath));
+    } else if (entry.name.endsWith('.mdx') || entry.name.endsWith('.md')) {
+      const fileContent = fs.readFileSync(fullPath, 'utf-8');
+      const { data } = matter(fileContent);
+
+      docs.push({
+        docId: relativePath.replace(/\.mdx?$/, ''),
+        title: data.title || entry.name.replace(/\.mdx?$/, ''),
+        folder: relativePath.split(path.sep)[0],
+      });
+    }
+  });
+
+  return docs;
+}
+
+const allDocs = getAllDocs(docsDir);
+
+fs.writeFileSync(outputPath, JSON.stringify(allDocs, null, 2));
+console.log(`✅ Generated docMeta.json with ${allDocs.length} docs`);
+```
+
+---
+
+### 1️⃣1️⃣ Enhanced NPM Scripts for Build and Dev
+
+To ensure `docMeta.json` is always up-to-date, the script is integrated directly into Docusaurus commands using `npm run` scripts.
+
+#### 📄 File: `package.json`
+
+```json
+"scripts": {
+  "docusaurus": "docusaurus",
+  "generate:docs": "node scripts/generateDocMeta.js",
+  "start": "npm run generate:docs && docusaurus start",
+  "build": "npm run generate:docs && docusaurus build"
+}
+```
+---
+
+## 📘 Project Documentation Summary
+
+This guide documents the architecture, logic, and customization of your **role-based Docusaurus documentation tool**.
+
+---
+
+### ✅ What’s Covered:
+
+| #  | Section                         | Summary                                                                                     |
+|----|----------------------------------|---------------------------------------------------------------------------------------------|
+| 1  | 🔐 Role-Based Auth (Overview)   | Describes how roles (`superadmin`, `developer`, `client`) control access via `RequireAuth` and `RoleContext`. |
+| 2  | 🌐 Customization                | Explains how to customize the site via `docusaurus.config.ts`, including layout, themes, and sidebar. |
+| 3  | 🧠 Role-based Docs Filtering    | Shows how `DocSidebarItemsWrapper` filters docs dynamically based on role in the sidebar.  |
+| 4  | 📂 Sidebar Access              | Confirms no manual changes to `sidebars.ts` are needed — filtering is handled during render. |
+| 5  | 🏗 Layout Wrapping             | `Layout` is wrapped in `RequireAuth` and `RoleProvider` to enforce global auth + context.   |
+| 6  | 🏠 Role-based Home Page        | Homepage content and doc links adapt to user roles using `docMeta.json` and config-driven rendering. |
+| 7  | 🧱 Card Component              | A reusable `Card` UI with SVG support is used to show features on the home page.            |
+| 8  | 🖼 SvgRenderer Utility         | Abstracts rendering of SVG icons into a dedicated component for reusability.                |
+| 9  | 🔐 Login Page                  | Login component validates users from config and sets role, auth status in `localStorage`.   |
+| 10 | 🛠 `generateDocMeta.js`       | A Node script recursively scans `docs/` and creates `docMeta.json` with titles, IDs, and folders. |
+| 11 | 📦 NPM Scripts                | Ensures `generateDocMeta.js` runs before `start` or `build`, keeping metadata accurate.     |

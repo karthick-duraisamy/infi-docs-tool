@@ -1,0 +1,305 @@
+---
+id: welcomedocs
+title: MD Guide
+description: A complete guide on how to write Markdown and embed content like code, lists, images, and videos in Docusaurus.
+sidebar_position: 1
+---
+
+# 📘 Markdown Syntax Guide for Docusaurus
+
+This guide covers how to write content in `.md` or `.mdx` files for your Docusaurus project.
+
+---
+
+## 🏷️ Headings
+
+```md
+# H1 Title
+## H2 Subtitle
+### H3 Section
+#### H4 Smaller Heading
+```
+Output:
+
+# H1 Title
+## H2 Subtitle
+### H3 Section
+#### H4 Smaller Heading
+
+---
+
+## 🧾 Paragraphs and Line Breaks
+
+Separate paragraphs with a blank line:
+
+```md
+This is the first paragraph.
+
+This is the second paragraph.
+```
+Output:
+
+This is the first paragraph.
+
+This is the second paragraph.
+
+Force line break with two spaces at the end of a line:
+
+```md
+Line one␣␣  
+Line two
+```
+Output:
+
+Line one  
+Line two
+
+---
+
+## ✅ Text Formatting
+
+```md
+**Bold**
+*Italic*
+~~Strikethrough~~
+`Inline code`
+```
+
+Output:
+
+**Bold**
+*Italic*
+~~Strikethrough~~
+`Inline code`
+
+---
+
+## 📋 Lists
+
+### Unordered
+
+```md
+- Item A
+- Item B
+  - Sub-item
+```
+
+Output:
+
+- Item A
+- Item B
+  - Sub-item
+
+### Ordered
+
+```md
+1. First item
+2. Second item
+```
+
+Output:
+
+1. First item
+2. Second item
+
+---
+
+## 💬 Blockquotes
+
+```md
+> This is a blockquote.
+```
+
+Output:
+> This is a blockquote.
+
+
+---
+
+## 💡 Code Blocks
+
+### Inline Code
+
+```md
+Use `npm install` to install packages.
+```
+
+Output:
+Use `npm install` to install packages.
+
+
+### Multi-line Code Block
+
+<pre>
+\```bash
+npm install
+npm run start
+\```
+</pre>
+
+Output:
+<pre>
+npm install
+npm run start
+</pre>
+
+---
+
+## 🔗 Links
+
+```md
+[Google](https://www.google.com)
+[Internal Page](./we.md)
+```
+
+Output:
+
+[Google](https://www.google.com)
+[Internal Page](./00-welcome.mdx)
+
+---
+
+## 🖼️ Images
+
+```md
+![Alt Text](https://example.com/image.png)
+![Local Image](/img/logo.png)
+```
+
+Output:
+
+![Alt Text](https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D)
+
+---
+
+## 🧠 Collapsible Sections
+
+```md
+<details>
+<summary>Click to expand</summary>
+
+Hidden content here.
+
+</details>
+```
+
+Output:
+
+<details>
+<summary>Click to expand</summary>
+
+Hidden content here.
+
+</details>
+---
+
+## 📢 Admonitions (Docusaurus Feature)
+
+```md
+:::tip
+This is a tip box.
+:::
+
+:::warning
+This is a warning box.
+:::
+
+:::danger
+This is a danger box.
+:::
+```
+
+Output:
+
+:::tip
+This is a tip box.
+:::
+
+:::warning
+This is a warning box.
+:::
+
+:::danger
+This is a danger box.
+:::
+---
+
+## 📊 Tables
+
+```md
+| Name   | Description     |
+|--------|-----------------|
+| Row 1  | First entry     |
+| Row 2  | Second entry    |
+```
+
+Output:
+
+| Name   | Description     |
+|--------|-----------------|
+| Row 1  | First entry     |
+| Row 2  | Second entry    |
+
+---
+
+## 🎬 Embedding Videos
+
+### ▶️ YouTube Video
+
+```html
+<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+title="YouTube video" frameborder="0" allowfullscreen></iframe>
+```
+
+
+### 📁 Local Video
+
+Put your video in `static/videos/intro.mp4` and use:
+
+```html
+<video controls width="100%">
+  <source src="/videos/intro.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+```
+
+### 🌐 External Video URL
+
+```html
+<video controls width="100%">
+  <source src="https://example.com/video.mp4" type="video/mp4" />
+</video>
+```
+
+Output:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/da6iVRSxAdE?si=AKGUPMiJW7sqRJ7R" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+---
+
+## 📝 Notes
+
+- Rename `.md` files to `.mdx` if you want to use React components or HTML tags.
+- Use the `static/` directory for storing images, videos, and other assets.
+
+## 📁 `_category_.json`
+
+Use `_category_.json` inside any `docs/` subfolder to control sidebar structure and metadata.
+
+---
+
+### 🧩 Basic Example
+
+```json
+{
+  "label": "My Category",
+  "position": 1,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "slug": "/my-category"
+  }
+}
+```

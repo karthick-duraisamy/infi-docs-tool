@@ -1,0 +1,76 @@
+{
+    "allowedDirsByRole": {
+      "superadmin": ["public", "developer", "client", "superadmin", "welcomedocs"],
+      "developer": ["public", "developer", "welcomedocs"],
+      "client": ["public", "client", "welcomedocs"]
+    },
+    "allowedDocsByRole": {
+      "superadmin": ["intro","welcomedocs"],
+      "developer": ["intro","welcomedocs"],
+      "client": ["intro","welcomedocs"]
+    },
+    "dummyUsers":[
+        {
+          "username": "admin",
+          "password": "admin123321",
+          "role": "superadmin"
+        },
+        {
+          "username": "dev",
+          "password": "dev123@!",
+          "role": "developer"
+        },
+        {
+          "username": "client",
+          "password": "client123@!",
+          "role": "client"
+        }
+    ],
+    "cardData":[
+        {
+          "svg": "HandGlobe",
+          "title": "Empowering Diverse Sectors",
+          "description": "From airlines to travel agencies, corporates to SMEs, we empower various segments of the travel industry."
+        },
+        {
+          "svg": "HandShake",
+          "title": "Strong Partnerships, Custom Solutions",
+          "description": "We forge robust partnerships with our clients, delivering tailored, cost-efficient solutions that address their unique pain points."
+        },
+        {
+          "svg": "GroupPeople",
+          "title": "Global Footprint, Local Excellence",
+          "description": "With 250+ skilled travel technology specialists in the Chennai office, we serve over 230 clients worldwide including major airlines and corporates."
+        }
+    ],
+    "subSectionData": {
+        "title": "How Infiniti Stands Out?",
+        "header": "Key Benefits of Choosing Infiniti as Your Travel Tech Partner",
+        "data": [
+          {
+            "title": "AI-Enhanced SaaS Solutions",
+            "description": "Specializing in niche SaaS products catering the needs of airlines, agencies, and corporates."
+          },
+          {
+            "title": "Continuous Innovation",
+            "description": "Infiniti is driven by a culture of constant innovation, tech updates, and enhancing its products."
+          },
+          {
+            "title": "Pioneering Travel Products",
+            "description": "Forefront of travel innovation offering new-age products that automates business operations."
+          },
+          {
+            "title": "Your Strategic Partner",
+            "description": "We understand our client's goals and challenges, strategize and deliver tailor-made solutions."
+          },
+          {
+            "title": "Security and Compliance",
+            "description": "Infiniti adheres to industry standards prioritizing security and compliance."
+          },
+          {
+            "title": "Customer-Centric Approach",
+            "description": "We emphasize our client’s needs, smooth implementation, and ongoing support."
+          }
+        ]
+    }
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "docId": "00-welcome",
+    "title": "MD Guide",
+    "folder": "00-welcome.mdx"
+  },
+  {
+    "docId": "client/B2B",
+    "title": "🌐 B2B",
+    "folder": "client"
+  },
+  {
+    "docId": "client/CBT",
+    "title": "🌍 AgencyAuto",
+    "folder": "client"
+  },
+  {
+    "docId": "client/GroupRM",
+    "title": "✈️ GroupRM",
+    "folder": "client"
+  },
+  {
+    "docId": "client/client-guide",
+    "title": "client-guide",
+    "folder": "client"
+  },
+  {
+    "docId": "developer/Backend/backend-basics",
+    "title": "backend-basics",
+    "folder": "developer"
+  },
+  {
+    "docId": "developer/Backend/php/cbt-be",
+    "title": "cbt-be",
+    "folder": "developer"
+  },
+  {
+    "docId": "developer/Backend/python/basics-be",
+    "title": "basics-be",
+    "folder": "developer"
+  },
+  {
+    "docId": "developer/Frontend/angular/Reports/angular-pack-security",
+    "title": "Security fix",
+    "folder": "developer"
+  },
+  {
+    "docId": "developer/Frontend/javascript/CBT/CBTDocs",
+    "title": "CBTDocs",
+    "folder": "developer"
+  },
+  {
+    "docId": "developer/Frontend/react/microFrontend",
+    "title": "Micro Frontend",
+    "folder": "developer"
+  },
+  {
+    "docId": "developer/R&D/centralised-docs-tool",
+    "title": "Centralised documentation tool",
+    "folder": "developer"
+  },
+  {
+    "docId": "developer/dev-guide",
+    "title": "dev-guide",
+    "folder": "developer"
+  },
+  {
+    "docId": "superadmin/admin-guide",
+    "title": "admin-guide",
+    "folder": "superadmin"
+  }
+]
