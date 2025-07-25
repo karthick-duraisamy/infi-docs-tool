@@ -1,0 +1,26 @@
+---
+title: Component Highlights
+---
+
+---
+
+### Editor.tsx
+- Main wrapper: renders all panels (left bank, canvas, right panel).
+- Provides access to core editor methods: `getHtml()`, `getJson()`, `loadJson()`.
+
+### View.tsx
+- Canvas renderer using `mjml-browser` & live MJML JSON tree.
+- Drag-drop logic, live element selection, and hover feedback.
+
+### HtmlWrapper.tsx
+- Injects interactivity: onClick, onDrag, contextual toolbars.
+
+### ComponentBank.tsx
+- Sidebar containing draggable MJML components (text, image, footer, etc).
+
+### Attributes.tsx
+- Right-side dynamic properties panel, renders mods like `Background`, `Padding`, etc.
+
+### CustomInlineEditor.tsx
+- CKEditor-based rich text editor for inline WYSIWYG editing on `mj-text`.
+

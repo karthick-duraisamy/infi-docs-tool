@@ -1,0 +1,94 @@
+---
+title: Work flow
+---
+
+---
+## 🏁 Complete End-to-End Workflow
+
+### 🚦 Initialization & Setup
+
+1. **App Startup**
+   - `App.tsx` mounts and loads `StoreProvider` (Redux context).
+   - `Editor.tsx` mounts as the main editor interface.
+
+2. **Editor Initialization**
+   - Initializes key states: `mjmlJson`, `preview`, `componentList`.
+   - Initializes hooks: `useDragAndDropUniqueId`, `useCkeditor`, etc.
+   - Loads config props (variables, language, decorators) into global context.
+
+3. **Loading Existing Templates**
+   - `loadJson()` (via `useImperativeHandle`) accepts raw MJML JSON.
+   - JSON is parsed → `importJson()` injects unique IDs, decodes Base64.
+   - Result updates global `mjmlJson` and stores in `UNDOREDO`.
+
+
+### 🧱 Building the Template
+
+#### 🔲 Rendering the Canvas
+- `Editor.tsx` renders `View.tsx`, which observes `mjmlJson`.
+- `mjmlProcessor` compiles MJML JSON to HTML.
+- `htmlProcessor` transforms HTML to a React tree.
+- Each MJML node is wrapped by `HtmlWrapper.tsx` for interaction.
+
+#### 🧲 Drag & Drop Logic
+
+1. **Start Drag**
+   - Drag starts from `ComponentBank.tsx`.
+   - `dragStart()` stores MJML config in `dataTransfer`.
+
+2. **Drop Target Detection**
+   - `onDragOver()` (in `View.tsx`) identifies drop position.
+   - Inserts visual placeholders via `generateDropItemPlaceholder()`.
+
+3. **On Drop**
+   - Drop handler removes previous placeholder.
+   - Validates target & inserts dropped config.
+   - Cleans JSON, updates `mjmlJson`, pushes to `UNDOREDO`.
+
+---
+
+### 🎯 User Interaction & Editing
+
+#### ✅ Selection
+- Clicking on elements sets active element via `HtmlContext`.
+
+#### 🎛 Attribute Panel (`Attributes.tsx`)
+- Renders UI based on `active` element's `mutableProperties`.
+- Uses `useVisibility` and `useValue` to toggle controls.
+- Changes update `mjmlJson` and trigger re-render + UNDO snapshot.
+
+#### ✏️ Inline Editing
+- `mj-text` activates `CustomInlineEditor.tsx`.
+- Uses `document.execCommand()` for inline formatting.
+- On blur → updates content in `mjmlJson`.
+
+#### 🧰 Contextual Toolbars
+- Positioned via `setToolBars`, conditionally shown.
+- Trigger copy/delete using `Copy`, `Remove` operations.
+
+#### 🔁 Undo/Redo
+- Actions call `UNDOREDO.newAction()`.
+- Buttons trigger `undoActionCallback()` or `redoActionCallback()`.
+
+#### 🔃 Reordering
+- Move section up/down via `moveSectionUp()` / `moveSectionDown()`.
+
+---
+
+### 🧪 Preview, Export, and Sending
+
+#### 👀 Preview
+- `setPreview(true)` opens modal.
+- HTML rendered in iframe using `mjml-browser`.
+- `html2canvas` used to generate screenshot.
+
+#### 📦 Exporting
+- `getHtml()` → compiles MJML JSON to final HTML.
+- `getJson()` → cleans JSON, encodes Base64, returns exportable string.
+
+#### 📨 Send Email (Dev)
+- `sendMail()` utility sends HTML via SendGrid API.
+- Used for preview/testing in development.
+
+
+This workflow tightly couples **drag-and-drop MJML editing**, **real-time HTML preview**, **attribute control panels**, and **inline text editing** within a dynamic and reactive state management system. It delivers a seamless email-building experience backed by powerful customization and export capabilities.

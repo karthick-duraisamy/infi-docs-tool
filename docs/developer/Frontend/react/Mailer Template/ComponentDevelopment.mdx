@@ -1,0 +1,517 @@
+---
+title: Component Development
+---
+
+# Component Development In Editor
+
+## 📝 Overview
+
+The Editor component provides a comprehensive interface for creating and editing email components and templates. It supports multiple editing modes (drag-and-drop, HTML, JSON), preview functionality, and integration with backend services.
+
+---
+
+### ✨ Key Features
+
+* Real-time preview functionality
+* Undo/Redo operations
+* Data variable and language variable insertion
+* Template/component saving and management
+* Internationalization support
+
+---
+
+### 📁 Folder Structure
+
+```
+components/
+├── SavedComponent/
+│   ├── SavedComponent.tsx            # Main component
+│   └── SavedComponent.scss           # Styles
+├── Templates/
+│   └── subPages/
+│       └── Editor/
+│           ├── Editor.tsx               # Main editor component
+│           ├── Editor.scss              # Editor styles
+│           └── Components/
+│               ├── PreviewModalTitle.tsx  # Preview modal title component
+│               └── Header.tsx             # Editor header component
+└── SavedTemplatePage/                   # Grid item component
+    └── GridViewCard/
+        ├── GridViewCard.tsx
+        └── GridViewCard.scss
+```
+---
+
+### 🏗️ Component Architecture
+
+#### ✅ TemplateLayout (Wrapper Component)
+
+Provides the main layout and controls for the editor interface.
+
+**Key Functions:**
+* Manages editor state and navigation
+* Handles preview modes
+* Provides save and test email functionality
+* Manages variable insertion
+
+#### ✅ Editor (Main Component)
+
+The core editor component that handles all editing functionality.
+
+**Key Features:**
+* Undo/Redo functionality
+* Text formatting tools
+* Variable management
+
+---
+
+### 🛠️ Implementation Details
+
+#### 🎨 Primary Drag and Drop Editing Mode
+
+The editor supports drag and drop editing mode:
+
+```tsx
+<EmailEditor
+  ref={ref}
+  preview={false}
+  showUndoRedo={false}
+  variables={variable}
+  languagesData={language}
+  cascader={cascader}
+  isComponent={isCreate}
+  componentData={Componentdata}
+  Get_template_id={handleTemplateIdfromDNDE}
+  variableDecoratorsData={config?.variable_decorators}
+/>
+```
+
+#### 👁️ Preview Functionality
+
+The editor provides responsive previews for different devices:
+
+```tsx
+const PreviewModal = () => {
+  return (
+    <PM
+      open={isOpen}
+      onCancel={() => dispatch(closePreviewModal())}
+      title={<PreviwModalTitle />}
+    >
+      <ModalContent />
+    </PM>
+  );
+};
+```
+
+#### 🏪 State Management
+
+Redux is used extensively to manage editor state:
+
+```tsx
+interface TemplateState {
+  save: boolean;
+  active: {
+    template_name: string;
+    templateType: string;
+    folder_id: number;
+    language_id: number;
+    subject: string;
+  };
+  undoredo: {
+    undo: boolean;
+    redo: boolean;
+  };
+  // ... other state properties
+}
+```
+
+---
+
+### 🌐 API Integration
+
+The editor integrates with several API endpoints:
+
+| **Endpoint** | **Method** | **Description** |
+|--------------|------------|-----------------|
+| `/template/` | POST | Create new template |
+| `/template/{id}` | PUT | Update template |
+| `/component/` | POST | Create new component |
+| `/component/{id}` | PUT | Update component |
+
+---
+
+### 🧩 Component Insertion Functionality in MJML JSON
+
+#### 🎯 Effect Trigger and Data Validation
+
+The process begins with validating the API response:
+
+```tsx
+useEffect(() => {
+  // Only proceed if API call was successful
+  if (!serviceGetSinglecomponentStatus.isSuccess) return;
+  
+  // Destructure response data
+  const { data } = serviceGetSinglecomponentStatus;
+  
+  // Validate response structure
+  if (!data || data.responseCode !== 0) return;
+```
+
+**Example API Response Structure:**
+
+```json
+{
+  "responseCode": 0,
+  "response": {
+    "data": {
+      "template_data": "{\"children\":[{\"tagName\":\"mj-body\",...}]",
+      "template_name": "Welcome Email",
+      "template_id": "123"
+    }
+  }
+}
+```
+
+#### 🧹 Empty Section Cleaning Function
+
+The core function that handles merging components into existing templates:
+
+```tsx
+const cleanEmptySections = (mjmlJson: any, nodeToBeInserted: any) => {
+  // 1. Find the mj-body section
+  const body = mjmlJson.children.find((child: any) => child.tagName === 'mj-body');
+  
+  // 2. Process sections in reverse order (to safely modify array while iterating)
+  for (let i = body.children.length - 1; i >= 0; i--) {
+    const section = body.children[i];
+    
+    // 3. Process columns within each section
+    for (let j = 0; j < section.children.length; j++) {
+      const column = section.children[j];
+      
+      // Example empty column child: { "tagName": "mj-text", "empty": true }
+      // 4. Filter empty/non-empty elements
+      const emptyChildren = column.children.filter(child => child.empty === true);
+      const nonEmptyChildren = column.children.filter(child => child.empty !== true);
+      
+      // 5. Handle three merge cases:
+      if (column.children.length === 1 && emptyChildren.length === 1) {
+        // Case 1: Replace entire empty section
+        body.children.splice(i, 1, ...nodeToBeInserted);
+        break;
+      } else if (emptyChildren.length > 0) {
+        // Case 2: Remove empties, insert new content
+        column.children = nonEmptyChildren;
+        body.children.splice(i + 1, 0, ...nodeToBeInserted);
+      } else if (body?.children?.length === 1 && body?.children?.[0]?.componentId) {
+        // Case 3: Replace single-component body
+        body.children = nodeToBeInserted;
+      }
+    }
+  }
+  return mjmlJson;
+};
+```
+
+#### 🔄 Data Merging with Metadata
+
+The function adds tracking metadata to components:
+
+```tsx
+// Parse the incoming template data
+const incoming = JSON.parse(data.response.data.template_data);
+
+// Example incoming data:
+// {
+//   "children": [{
+//     "tagName": "mj-body",
+//     "children": [{
+//       "tagName": "mj-section",
+//       "children": [{
+//         "tagName": "mj-column",
+//         "children": [{
+//           "tagName": "mj-text",
+//           "content": "Hello World"
+//         }]
+//       }]
+//     }]
+//   }]
+// }
+
+// Get current editor state
+const originalJson = JSON.parse(ref.current.getJson());
+
+// Add metadata to components
+responseBody?.children?.forEach((child: any) => {
+  child.tagId = templateName; // "Welcome Email"
+  child.componentId = componentId; // "123"
+  child.attributes['css-class'] = `cls-componentTag ${templateName}`;
+  // Adds tracking attribute:
+  // data--component--id="Welcome Email"
+});
+```
+
+#### 🎬 Final Merge and Loading
+
+```tsx
+// Get components to insert
+const inputArray = incoming?.children?.find(c => c.tagName === 'mj-body')?.children || [];
+
+// Perform the merge
+const cleanedMjmlJson = cleanEmptySections(originalJson, inputArray);
+
+// Load into editor - different handling for components vs templates
+loadJson(JSON.stringify(!isCreate ? cleanedMjmlJson : incoming));
+```
+
+#### 📊 Visual Example of Merge Operation
+
+**Before Merge - originalJson:**
+```
+mj-body
+  mj-section (empty)
+    mj-column
+      mj-text (empty: true)
+```
+
+**Incoming Data:**
+```
+mj-body
+  mj-section
+    mj-column
+      mj-text "New Content"
+```
+
+**After Merge - cleanedMjmlJson:**
+```
+mj-body
+  mj-section
+    mj-column
+      mj-text "New Content"
+  mj-section (from original, non-empty)
+    ...
+```
+
+---
+
+### ⚠️ Error Handling
+
+The component includes comprehensive error handling:
+
+```tsx
+} catch (error) {
+  console.error('Error processing template data:', error);
+  // Example error cases:
+  // - Invalid JSON structure
+  // - Missing required fields
+  // - Unexpected template format
+}
+```
+
+**The actual implementation handles edge cases like:**
+* Malformed MJML
+* Various empty states
+* Different component types
+* Nested structures
+* Metadata preservation
+
+---
+
+### 💾 API Example - Template Creation
+
+Example API call to create template:
+
+```tsx
+const [serviceAddTemplate] = useAddTemplateMutation();
+
+const handleSave = async () => {
+  const response = await serviceAddTemplate({
+    template: {
+      template_name: active.template_name,
+      template_content: getHtml(),
+      template_data: getJson(),
+      folder: active.folder_id,
+      language: active.language_id || 1,
+      // type: For component creation "C", for product template creation "P"
+      type: active.templateType, 
+      subject: active.subject,
+      project: localStorage.getItem('project')
+    }
+  });
+};
+```
+
+---
+
+### 🔧 Advanced Features
+
+This sophisticated merge operation is specialized for email template editing, where:
+
+* **Structure integrity** is maintained (MJML requirements)
+* **Empty content** is handled safely
+* **Components** are tracked with metadata
+* **Editor state** updates correctly for both templates and components
+
+---
+
+# Component List Page
+
+## 📋 Overview
+
+The Component List Page displays a paginated grid of saved email components with functionality to create new ones. It integrates with Redux for state management and provides a responsive grid layout.
+
+---
+
+### ✨ Key Features
+
+* Displays components in a grid layout
+* Pagination support
+* Create new components
+* State management with Redux
+* Responsive design
+* Internationalization support
+
+---
+
+### 🏗️ Component Architecture
+
+#### ✅ SavedComponent (Main Component)
+
+The main container that manages data fetching, pagination, and creation workflows.
+
+**Key Functions:**
+* `fetchComponentList()`: Fetches component data
+* `handleCreateComponent()`: Handles new component creation
+* Pagination control
+
+**Example:**
+```tsx
+import SavedComponent from './components/SavedComponent/SavedComponent';
+
+const App = () => {
+  return (
+    <div className="app">
+      <SavedComponent />
+    </div>
+  );
+}
+```
+
+#### ✅ GridViewCard
+
+Displays individual component cards in the grid.
+
+**Key Features:**
+* Component preview
+* Metadata display
+* Double-click to edit
+* Status indicator
+
+---
+
+### 🛠️ Implementation Details
+
+#### 📡 Data Fetching
+
+The component uses RTK Query mutations to fetch component data:
+
+```tsx
+const [getComponentlist, getComponentlistStatus] = useGetComponentMutation();
+const [getSinglePageComponentlist, getSinglePageComponentlistStatus] = useGetSinglePageComponentMutation();
+```
+
+#### 🏪 State Management
+
+Redux is used to manage:
+* Pagination state
+* Component status (create/edit/delete)
+* Active component data
+
+**Example Redux slice:**
+```tsx
+interface ComponentState {
+  isCreate: boolean;
+  isEdit: boolean;
+  isDelete: boolean;
+  pageNumber?: number | string | undefined;
+}
+
+const initialState: ComponentState = {
+  isCreate: false,
+  isEdit: false,
+  isDelete: false,
+  pageNumber: 1
+};
+```
+
+#### 📄 Pagination Implementation
+
+The pagination component is integrated with Ant Design:
+
+```tsx
+<Pagination
+  className="text-right"
+  style={{ justifyContent: 'end' }}
+  pageSize={6}
+  current={pageNumber ? Number(pageNumber) : 1}
+  total={componentDataCount}
+  onChange={(nextPage) => {
+    setLoading(true);
+    dispatch(setComponentPageNumber(nextPage));
+    getSinglePageComponentlist({ 
+      page: nextPage.toString(), 
+      project: localStorage.getItem('project') 
+    });
+  }}
+/>
+```
+
+#### ➕ Creating New Components
+
+The "Create Component" button triggers a navigation to the editor:
+
+```tsx
+const handleCreateComponent = useCallback(() => {
+  dispatch(setComponentstatus({ isCreate: true, isEdit: false, isDelete: false }));
+  dispatch(setActiveTemplateName(''));
+  dispatch(setTemplateTypeID('C'));
+  navigate('/editor/new');
+}, [dispatch, navigate]);
+```
+
+---
+
+### 🌐 API Endpoints
+
+| **Endpoint** | **Method** | **Description** |
+|--------------|------------|-----------------|
+| `/component/` | GET | Get full component list |
+| `/component/` | GET | Get paginated component list |
+| `/component/` | POST | Create new component |
+| `/component/{id}` | PUT | Update component |
+| `/component/{id}` | DELETE | Delete component |
+
+---
+
+### ⚠️ Error Handling
+
+The component handles:
+* Loading states with a loader component
+* API errors through RTK Query status
+* Empty states (implicitly through the grid display)
+
+---
+
+### 🌍 Translation
+
+All UI text uses the `t()` function for translation:
+
+```tsx
+<Button onClick={handleCreateComponent}>
+  {t('create_component')}
+</Button>
+```
+
+

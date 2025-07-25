@@ -1,0 +1,246 @@
+---
+title: Basics
+---
+
+# Drag & Drop Editor(DNDE)
+
+A React-based MJML email editor designed for building dynamic, responsive templates using a no-code drag-and-drop interface. Built with modular components, rich inline editing, and advanced MJML processing using browser-native compilation.
+
+---
+
+## 📁 Folder Structure
+
+```json
+
+├── public/
+│   ├── index.html
+│   │   └── Main HTML file where the React app is mounted.
+│   └── manifest.json
+│       └── Web app manifest for progressive web app features.
+├── src/
+│   ├── Assets/
+│   │   ├── Css/
+│   │   │   └── Global CSS styles and overrides
+│   │   │       (e.g., ckeditorOverride.css, quillOverride.css)
+│   │   ├── Images/
+│   │   │   └── Image assets
+│   │   │       (e.g., draganddrop.svg, footer_1.jpg, header_1.jpg, GOL.png)
+│   │   └── MjmlJSON/
+│   │       └── Pre-defined MJML JSON templates
+│   │           (e.g., footer_1.json, gol.json, Header_1.json)
+│   ├── Components/
+│   │   ├── Mods/
+│   │   │   ├── Background.tsx
+│   │   │   │   └── Attribute modification for background properties.
+│   │   │   ├── Border.tsx
+│   │   │   │   └── Attribute modification for border properties.
+│   │   │   ├── BorderRadius.tsx
+│   │   │   │   └── Attribute modification for border-radius.
+│   │   │   ├── CustomInlineEditor.tsx
+│   │   │   │   └── Custom inline rich-text editor interface.
+│   │   │   ├── Editor.tsx
+│   │   │   │   └── (Could be related to an embedded editor instance, distinct from main Editor.tsx)
+│   │   │   ├── FontConfig.tsx
+│   │   │   │   └── Configuration for font attributes.
+│   │   │   ├── Link.tsx
+│   │   │   │   └── Attribute modification for link (href) properties.
+│   │   │   ├── Paddings.tsx
+│   │   │   │   └── Attribute modification for padding properties.
+│   │   │   ├── Title.tsx
+│   │   │   │   └── Attribute modification for title properties.
+│   │   │   ├── VerticalAlign.tsx
+│   │   │   │   └── Attribute modification for vertical alignment.
+│   │   │   └── WidthHeight.tsx
+│   │   │       └── Attribute modification for width and height.
+│   │   ├── Breadcrumb.tsx
+│   │   │   └── Navigation breadcrumbs
+│   │   ├── BodyAttributes.tsx
+│   │   │   └── Panel for editing global `mj-body` attributes
+│   │   ├── ColumnAttributes.tsx
+│   │   │   └── Panel for editing `mj-column` attributes
+│   │   │       (e.g., dynamic tabs for multiple columns)
+│   │   ├── ComponentBank.tsx
+│   │   │   └── Left sidebar panel with draggable MJML elements
+│   │   │       (e.g., Button, Divider, Footer, Header, Html, Image, Section, Social, Spacer, Text, Template)
+│   │   ├── HtmlWrapper.tsx
+│   │   │   └── Core wrapper for rendered MJML elements, adding interactivity like
+│   │   │       (e.g., selection and drag)
+│   │   ├── Icon.tsx
+│   │   │   └── SVG icons for editor components
+│   │   ├── MoveUpDownRow.tsx
+│   │   │   └── Controls for reordering `mj-section` elements
+│   │   ├── Preview.tsx
+│   │   │   └── Modal for rendering and displaying HTML email preview
+│   │   ├── UndoRedo.tsx
+│   │   │   └── Undo/Redo action buttons
+│   │   ├── UiWrapper.tsx
+│   │   │   └── Visual wrapper for draggable icons in ComponentBank
+│   │   └── index.ts
+│   │       └── Optional barrel file for exporting components
+│   ├── Context/
+│   │   ├── Ckeditor.context.ts
+│   │   │   └── Context for CKEditor instance and rich text state
+│   │   ├── CustomEditor.context.ts
+│   │   │   └── Context for managing inline editor status and position
+│   │   ├── DragAndDrop.context.ts
+│   │   │   └── Context for unique ID generation during drag-and-drop
+│   │   ├── Editor.context.ts
+│   │   │   └── Central context for MJML JSON and editor-wide state
+│   │   └── Htmlwrapper.context.ts
+│   │       └── Tracks active and hovered elements in the preview
+│   ├── Hooks/
+│   │   ├── Attribute.hook.ts
+│   │   │   └── `useVisibility`, `useValue` logic for dynamic attribute panel rendering
+│   │   ├── Ckeditor.hook.ts
+│   │   │   └── Access and manage CKEditor context
+│   │   ├── CustomEditor.hook.ts
+│   │   │   └── Hook for accessing inline editor state
+│   │   ├── Drag.hook.ts
+│   │   │   └── Hook for interacting with drag-and-drop context
+│   │   ├── Editor.hook.ts
+│   │   │   └── Hook for accessing editor-wide context
+│   │   ├── Fonts.hook.ts
+│   │   │   └── Manages and loads fonts used in MJML components
+│   │   └── Htmlwrapper.hook.ts
+│   │       └── Access to preview state for interactivity
+│   ├── Lib/
+│   │   └── base64.ts
+│   │       └── Utility for base64 encode/decode of assets or HTML
+│   ├── Store/
+│   │   ├── api.ts
+│   │   │   └── RTK Query slice for fetching templates or backend data
+│   │   ├── list.ts
+│   │   │   └── Reducer for managing template list state
+│   │   └── store.ts
+│   │       └── Redux store setup with middleware and provider
+│   ├── Utils/
+│   │   ├── closestParent.ts
+│   │   │   └── Finds nearest MJML parent in DOM
+│   │   ├── detectEmptyBody.ts
+│   │   │   └── Detects empty sections/columns to render placeholders
+│   │   ├── dragStart.ts
+│   │   │   └── Drag initialization helper (e.g., e.dataTransfer setup)
+│   │   ├── eventElementRelation.ts
+│   │   │   └── Determines mouse relation to an element
+│   │   ├── findElementInMjmlJson.ts
+│   │   │   └── Locates elements in MJML JSON using CSS class IDs
+│   │   ├── findElementsParent.ts
+│   │   │   └── Finds a parent mj-column or mj-section of a target
+│   │   ├── findTextNode.ts
+│   │   │   └── Finds closest text node and container for inline editing
+│   │   ├── generateDropItemPlaceholder.ts
+│   │   │   └── Creates visual drop placeholders during drag-over
+│   │   ├── htmlProcessor.ts
+│   │   │   └── Converts MJML-generated HTML string into React tree
+│   │   ├── htmlSerializer.ts
+│   │   │   └── Converts rendered HTML back into MJML JSON
+│   │   ├── InlineEditorActions.ts
+│   │   │   └── Applies rich text formatting using `document.execCommand`
+│   │   ├── logger.ts
+│   │   │   └── Toggleable console logging utility
+│   │   ├── mjmlProcessor.ts
+│   │   │   └── Cleans, encodes, imports, and exports MJML JSON
+│   │   ├── operations.ts
+│   │   │   └── CRUD operations on MJML JSON (Add, Remove, Copy, UpdateValue)
+│   │   ├── reactPropertyNames.ts
+│   │   │   └── Maps standard HTML attributes to React-style props
+│   │   ├── removePlaceholders.ts
+│   │   │   └── Removes temporary drag/drop placeholders
+│   │   ├── reorderSections.ts
+│   │   │   └── Logic for moving sections up/down within MJML JSON
+│   │   ├── sendMail.ts
+│   │   │   └── Sends test email using SendGrid (dev utility)
+│   │   ├── setToolbarPositions.ts
+│   │   │   └── Positions contextual toolbars (delete, copy, inline)
+│   │   └── typeoftag.ts
+│   │       └── Identifies simplified MJML tag name from CSS class
+│   ├── App.scss
+│   │   └── Global SCSS styles for the entire app
+│   ├── App.tsx
+│   │   └── Root React component; sets up StoreProvider and renders the editor
+│   ├── Editor/
+│   │   ├── Editor.module.scss
+│   │   │   └── SCSS styling for editor layout
+│   │   ├── Editor.tsx
+│   │   │   └── Main editor component orchestrating UI and logic
+│   │   └── View.tsx
+│   │       └── Central interactive canvas for MJML rendering and interaction
+│   ├── index.css
+│   │   └── Global stylesheet for the app
+│   ├── index.tsx
+│   │   └── Application entry point (ReactDOM.render)
+│   └── reportWebVitals.ts
+│       └── Optional performance tracking (CRA default)
+├── node_modules/
+│   └── Directory containing installed npm packages
+├── package.json
+│   └── Project metadata and dependencies
+├── tsconfig.json
+│   └── TypeScript configuration file
+├── webpack.config.js
+│   └── Webpack configuration (may be explicit or handled by react-scripts)
+└── README.md
+    └── Project README file
+```
+
+## 🚀 Tech Stack
+
+This project employs a modern frontend stack powered by **React**, **MJML**, and **Redux Toolkit**, focused on building a highly interactive, WYSIWYG email template editor.
+
+
+### 🖥️ Frontend
+
+- **React 18.1.0** – Core library for building UI components
+- **React DOM 18.1.0** – Rendering library for React in the browser
+- **Ant Design 4.22.7** – Rich React UI component library (e.g., Buttons, Modals, Inputs)
+- **Styled Components 5.3.5** – Write scoped, component-level CSS with JS logic
+- **SASS 1.52.1** – CSS preprocessor for variables, nesting, and mixins
+- **React Router DOM 6.3.0** – SPA routing library for React
+- **React Custom Scrollbars 2 (4.4.0)** – Customizable and performant scrollbars
+- **React Color 2.19.3** – Lightweight color picker components
+
+#### Additional Tools:
+- **Hooks** – Used extensively for logic encapsulation and state/effect management
+- **Context API** – Lightweight alternative to Redux for scoped state sharing (e.g., CkeditorContext, HtmlContext)
+
+
+### ⚙️ State Management
+
+- **Redux Toolkit 1.8.1** – Modern Redux setup with RTK Query built-in
+- **React Redux 8.0.2** – Official bindings to connect Redux to React
+- **RTK Query** – Built-in RTK data fetching and caching layer used for template API interactions
+
+
+### 📦 Core Editor Libraries
+
+- **mjml 4.12.0** – Email markup language compiler for responsive emails
+- **mjml-browser 4.12.0** – Browser-compatible MJML compiler (used on frontend)
+- **mjml-cli 4.12.0** – CLI-based MJML compiler (used in dev)
+- **lodash 4.17.21** – Utility library for deep clone, object/array manipulation
+- **html2canvas 1.4.1** – Captures HTML DOM and renders as canvas image (for preview/thumbnailing)
+
+
+### 🧪 Development & Build Tools
+
+- **TypeScript 4.6.4** – Statically typed superset of JS for maintainable code
+- **Webpack 5.60.0** – Module bundler for dev/prod builds and dynamic imports
+- **React Scripts 5.0.1** – CRA tooling for dev server and production build
+- **Babel** (`@babel/core`, `env`, `react`, `typescript`) – Transpiler to support modern JS and JSX
+- **ESLint (CRA preset)** – Linter for enforcing code quality and best practices
+
+
+### 🧰 Testing
+
+- **Jest** with **@types/jest 27.5.1** – Unit testing framework with TS support
+- **React Testing Library 13.2.0** – Integration testing for React UIs
+- **User Event 14.2.0** – Simulates realistic user interactions in tests
+- **jest-dom 5.16.4** – Custom DOM matchers for cleaner test assertions
+
+
+### 📤 Backend / Dev-only Services
+
+- **@sendgrid/mail 7.4.6** – SendGrid’s Node.js SDK for sending test/dev emails via API
+
+This is listed under `devDependencies` and primarily used during development for testing template output or previewing emails via actual inbox delivery.
+
+---

@@ -1,0 +1,191 @@
+---
+title: Sample MJML JSON
+---
+
+---
+## 📄 MJML JSON Sample
+
+```json
+{
+  "tagName": "mjml", // The root tag of any MJML document. This is where the email structure begins.
+  "attributes": {}, // Attributes for the mjml tag itself (rarely used).
+  "children": [      // Contains the main sections of the MJML document: mj-head and mj-body.
+    {
+      "tagName": "mj-head", // Defines the header section of the MJML document. This contains metadata, styles, and global attributes.
+      "attributes": {},    // Attributes for the mj-head tag (e.g., lang).
+      "children": [        // Children of mj-head define global settings and styles.
+        {
+          "tagName": "mj-title", // Sets the title of the email, which typically appears in the email client's subject line or tab.
+          "content": "dnde-editor" // The actual text content for the email's title.
+        },
+        {
+          "tagName": "mj-style", // Allows embedding custom CSS styles directly into the email, often for responsiveness or specific client fixes.
+          "content": "a{text-decoration:none!important}\n\n.body {} " // The CSS rules. `!important` is often used for email client compatibility.
+        },
+        {
+          "tagName": "mj-attributes", // A powerful tag that allows setting default attributes for specific MJML tags within the entire email.
+          "children": [               // Children of mj-attributes define default styles for other MJML tags.
+            {
+              "tagName": "mj-text", // Specifies default attributes for all `mj-text` tags in the email.
+              "attributes": {
+                "font-family": "Arial" // Sets the default font family for all mj-text elements.
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tagName": "mj-body", // Defines the main content area of the email. This is where sections and columns for layout are placed.
+      "attributes": {        // Attributes for the mj-body tag.
+        "css-class": "mjml-tag body identifier-mj-body", // Custom CSS classes for editor identification (`mjml-tag`, `body`, `identifier-mj-body`) and styling.
+        "background-color": "#F1F1F1", // Sets the background color of the entire email body.
+        "width": "600px" // Sets the default width of the email content area.
+      },
+      "children": [          // Contains the layout sections (mj-section) of the email.
+        {
+          "tagName": "mj-section", // A fundamental layout block in MJML. Sections are full-width containers that can hold columns.
+          "attributes": {          // Attributes for this specific section.
+            "background-color": "#fff", // Background color for this section.
+            "border": "none",         // No border for this section.
+            "border-radius": "0px",   // No rounded corners for this section.
+            "padding": "10px 25px",   // Padding around the content within this section (top/bottom 10px, left/right 25px).
+            "text-align": "center",   // Aligns content within this section to the center.
+            "css-class": " mjml-tag  identifier-mj-section-10" // Custom CSS classes for editor identification and styling.
+          },
+          "children": [            // Children of mj-section typically consist of mj-column tags.
+            {
+              "tagName": "mj-column", // Defines a column within an mj-section. Content elements (text, image, button) are placed inside columns.
+              "attributes": {          // Attributes for this specific column.
+                "css-class": " mjml-tag  identifier-mj-column-9", // Custom CSS classes for editor identification and styling.
+                "padding": "0px 0px" // Padding around the content within this column (0px all sides).
+              },
+              "children": [          // Children of mj-column are the actual content elements.
+                {
+                  "tagName": "mj-image", // An MJML tag for displaying images.
+                  "attributes": {        // Attributes for this image.
+                    "align": "center",   // Centers the image horizontally.
+                    "alt": "logo",       // Alt text for accessibility.
+                    "border": "none",
+                    "border-top": "none",
+                    "border-bottom": "none",
+                    "border-left": "none",
+                    "border-right": "none", // Specific border attributes.
+                    "height": "auto",    // Image height adjusts automatically to maintain aspect ratio.
+                    "padding": "0px 8px", // Padding around the image itself.
+                    "target": "_blank",  // Opens the link in a new tab if href is present.
+                    "css-class": " mjml-tag  identifier-mj-image-11", // Custom CSS classes for editor identification and styling.
+                    "src": "https://packagist.infinitisoftware.net/mailer/images/GroupRM-Logo.png" // Source URL of the image.
+                  },
+                  "children": [],          // mj-image does not contain children.
+                  "mutableProperties": [   // List of attributes that can be edited in the UI for this specific mj-image instance.
+                    "align", "alt", "border", "border-top", "border-bottom", "border-left", "border-right",
+                    "border-radius", "container-background-color", "css-class", "fluid-on-mobile", "height",
+                    "href", "name", "padding", "padding-bottom", "padding-left", "padding-right", "padding-top",
+                    "rel", "sizes", "src", "srcset", "target", "title", "usemap", "width"
+                  ],
+                  "mutalbePropertiesWithDefaultValues": { // Default values for the mutable properties when this image type is created.
+                    "align": "center", "alt": "", "border": "none", "border-bottom": "", "border-left": "", "border-radius": "",
+                    "border-right": "", "border-top": "", "container-background-color": "", "css-class": "",
+                    "fluid-on-mobile": "", "height": "auto", "href": "", "name": "", "padding": "10px 25px",
+                    "padding-bottom": "", "padding-left": "", "padding-right": "", "padding-top": "", "rel": "",
+                    "sizes": "", "src": "", "srcset": "", "target": "_blank", "title": "", "usemap": ""
+                  }
+                }
+              ],
+              "mutableProperties": [ // List of attributes that can be edited in the UI for this specific mj-column instance.
+                "background-color", "inner-background-color", "border", "border-bottom", "border-left", "border-right",
+                "border-top", "border-radius", "inner-border", "inner-border-bottom", "inner-border-left", "inner-border-right",
+                "inner-border-top", "inner-border-radius", "width", "padding", "padding-top", "padding-bottom",
+                "padding-left", "padding-right", "css-class"
+              ]
+            }
+          ],
+          "cannot_have": [ // Defines MJML tags that cannot be direct children of this section (e.g., sections cannot contain other sections directly).
+            "mj-section",
+            "mj-column" // This is typically wrong; sections *must* contain columns. This might be a placeholder indicating that it can't contain additional free-floating sections/columns.
+          ],
+          "mutableProperties": [ // List of attributes that can be edited in the UI for this specific mj-section instance.
+            "background-color", "background-position", "background-position-x", "background-position-y", "background-repeat",
+            "background-size", "background-url", "border", "border-bottom", "border-left", "border-radius", "border-right",
+            "border-top", "css-class", "direction", "full-width", "padding", "padding-bottom", "padding-left",
+            "padding-right", "padding-top", "text-align"
+          ]
+        },
+        {
+          "tagName": "mj-section", // Another mj-section, demonstrating multiple sections in the body.
+          "attributes": {
+            "background-color": "#fff",
+            "border": "none",
+            "border-radius": "0px",
+            "padding": "10px 25px",
+            "text-align": "center",
+            "css-class": " mjml-tag  identifier-mj-section-25" // Unique identifier for this section.
+          },
+          "children": [
+            {
+              "tagName": "mj-column", // A column within this second section.
+              "attributes": {
+                "css-class": " mjml-tag  identifier-mj-column-24", // Unique identifier for this column.
+                "padding": "0px 0px"
+              },
+              "children": [
+                {
+                  "tagName": "mj-text", // An mj-text content element.
+                  "attributes": {
+                    "color": "#000000",
+                    "font-size": "13px",
+                    "line-height": "1",
+                    "align": "left",
+                    "padding": "10px 25px",
+                    "padding-left": "0px",
+                    "padding-right": "0px",
+                    "css-class": " mjml-tag  identifier-mj-text-26", // Unique identifier for this text block.
+                    "background-url": "",
+                    "background-size": "",
+                    "background-repeat": ""
+                  },
+                  "content": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.", // The text content.
+                  "mutableProperties": [ // Mutable properties for this mj-text element.
+                    "color", "font-family", "font-size", "font-style", "font-weight", "line-height", "height",
+                    "text-decoration", "text-transform", "align", "container-background-color", "padding",
+                    "padding-top", "padding-bottom", "padding-left", "padding-right", "css-class",
+                    "background-url", "background-size", "background-repeat"
+                  ],
+                  "mutalbePropertiesWithDefaultValues": { // Default values for mutable properties of mj-text.
+                    "color": "#000000", "font-family": "Arial", "font-size": "13px", "font-style": "",
+                    "font-weight": "", "line-height": "1", "height": "", "text-decoration": "", "text-transform": "",
+                    "align": "left", "container-background-color": "", "background-url": "", "padding": "10px 25px",
+                    "padding-top": "", "padding-bottom": "", "padding-left": "", "padding-right": "", "css-class": ""
+                  }
+                }
+              ],
+              "mutableProperties": [ // Mutable properties for this mj-column.
+                "background-color", "inner-background-color", "border", "border-bottom", "border-left", "border-right",
+                "border-top", "border-radius", "inner-border", "inner-border-bottom", "inner-border-left", "inner-border-right",
+                "inner-border-top", "inner-border-radius", "width", "padding", "padding-top", "padding-bottom",
+                "padding-left", "padding-right", "css-class"
+              ]
+            }
+          ],
+          "cannot_have": [ // Tags this section cannot directly contain.
+            "mj-section",
+            "mj-column"
+          ],
+          "mutableProperties": [ // Mutable properties for this mj-section.
+            "background-color", "background-position", "background-position-x", "background-position-y", "background-repeat",
+            "background-size", "background-url", "border", "border-bottom", "border-left", "border-radius", "border-right",
+            "border-top", "css-class", "direction", "full-width", "padding", "padding-bottom", "padding-left",
+            "padding-right", "padding-top", "text-align"
+          ]
+        }
+      ],
+      "mutableProperties": [ // Mutable properties for the mj-body itself.
+        "width",
+        "background-color"
+      ]
+    }
+  ],
+  "attributes": {} // Global attributes for the entire MJML document (rarely used here).
+}
+```

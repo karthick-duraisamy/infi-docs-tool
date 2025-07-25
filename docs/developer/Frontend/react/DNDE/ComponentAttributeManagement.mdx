@@ -1,0 +1,276 @@
+---
+title: Component & Attribute Management
+---
+
+The email editor provides a robust system for managing and interacting with MJML components. Here's a breakdown of how to extend its capabilities by adding new components and attributes.
+
+---
+
+## ➕ How to Add a New Basic Component to the Component Bank
+Adding a new basic MJML component (e.g., button, text block, image) to the **Component Bank** (left sidebar) enables drag-and-drop editing without needing a separate JSON or preview asset.
+
+---
+
+## 🧱 Workflow Overview
+
+### 1️⃣ Define the Component (e.g., `MyNewBasicComponent.tsx`)
+
+* Create the file inside `src/Components/`
+* Set up the MJML structure inside a `config` object
+* Implement `onDragStart` using `dragStart(config)`
+* Wrap the UI using `UiWrapper` for consistent styling
+
+```tsx
+// src/Components/MyNewBasicComponent.tsx
+import { SyntheticEvent } from 'react';
+import { useEditor } from '../Hooks/Editor.hook';
+import { dragStart } from '../Utils/dragStart';
+import { cleanMjmlJson } from '../Utils/mjmlProcessor';
+import { UiWrapper } from './UiWrapper';
+
+export const MyNewBasicComponent = () => {
+  const { mjmlJson, setMjmlJson } = useEditor();
+
+  const config = {
+    tagName: 'mj-text',
+    attributes: {
+      align: 'left',
+      color: '#000000',
+      'font-size': '14px',
+      padding: '10px',
+      'css-class': 'mjml-tag identifier-mj-mynewcomponent',
+    },
+    children: [],
+    content: 'This is my new basic component!',
+    mutableProperties: ['align', 'color', 'font-size', 'padding'],
+    mutalbePropertiesWithDefaultValues: {
+      align: 'left',
+      color: '#000000',
+      'font-size': '14px',
+      padding: '10px',
+    },
+  };
+
+  const onDragStart = (e: any) => dragStart(e, config);
+  const onDragEnd = () => setMjmlJson({ ...cleanMjmlJson(mjmlJson) });
+
+  return (
+    <div onDragEnd={onDragEnd} onDragStart={onDragStart} draggable={true}>
+      <UiWrapper background="text" label="My New Item" />
+    </div>
+  );
+};
+```
+
+### 2️⃣ Register in `ComponentBank.tsx`
+
+```tsx
+// src/Editor/ComponentBank.tsx
+import { MyNewBasicComponent } from '../Components/MyNewBasicComponent';
+
+export const ComponentBank = () => {
+  return (
+    <Scrollbars style={{ height: '100%' }} autoHide={true}>
+      <div className={css.components}>
+        <Col>Elements</Col>
+        <SectionV2 />
+        <Button />
+        <Text />
+        <Image />
+        <Spacer />
+        <Divider />
+        <Html />
+        <Social />
+        <MyNewBasicComponent /> {/* ⬅️ Add your component here */}
+      </div>
+    </Scrollbars>
+  );
+};
+```
+
+---
+
+## 🔄 What Happens on Drop?
+
+When `MyNewBasicComponent` is dropped onto the canvas:
+
+1. The `onDrop` handler in **`View.tsx`** receives the `config` which includes the full MJML JSON structure of the dragged item via `e.dataTransfer`. 
+2. The **`Add` operation** is then triggered. This operation will:
+    * Apply unique IDs to all elements within your custom component's `config` using `generateUniqueIdRecursively`.
+    * Insert this fully prepared component into the `mjmlJson` at the correct drop position, often replacing a placeholder.
+    * Update the `mjmlJson` state and record the action for undo/redo.
+
+
+✅ The new basic MJML component is now part of your drag-and-drop workflow.
+
+---
+
+## How Attributes Panel Handles Components Dropped in View and Shows Attributes 🎨
+
+The **Attributes Panel** (right sidebar) provides a dynamic interface to edit properties of the currently selected MJML element in the `View`.
+
+### Workflow:
+
+1.  **Element Selection**:
+    * When a user **clicks** on any `HtmlWrapper`-wrapped MJML element within the **`View.tsx`** canvas, the `onClick` handler of that `HtmlWrapper` is triggered.
+    * This `onClick` handler calls `setActive(idRef.current)`, which updates the global `active` state in the `HtmlContext` with the unique ID of the clicked element.
+
+2.  **Attributes Panel Reacts to Selection**:
+    * The **`Attributes.tsx` component** (the main component for the right sidebar) observes changes in this global `active` state.
+    * Attribute modification components (located in `src/Components/Mods/`, e.g., `Background.tsx`, `WidthHeight.tsx`) are rendered within `Attributes.tsx`. These `Mods` components use custom hooks to determine their visibility and retrieve values.
+
+3.  **`useVisibility` Determines Display**:
+    * Each `Mods/*` component internally utilizes the **`useVisibility` hook**.
+    * `useVisibility` takes the `attribute` name (e.g., `'background-color'`), a `property` name, or a `customPath` (for static elements like `mj-body`).
+    * It gets the unique ID of the `active` HTML element from `HtmlContext`.
+    * It then uses `findElementInJson` to locate the corresponding MJML JSON object (let's call it `item`) and its `path` within the global `mjmlJson`.
+    * Crucially, it checks if this `item`'s `mutableProperties` array (which was defined when the component was created) **includes** the `attribute` being checked (e.g., is `background-color` listed in `Text.tsx`'s `mutableProperties`?).
+    * If the attribute is found in `mutableProperties`, `useVisibility` returns `visible: true` for that specific attribute control. Otherwise, it returns `visible: false`.
+
+4.  **`useValue` Retrieves Current Data**:
+    * For every attribute control whose `visible` state is `true`, the **`useValue` hook** is utilized.
+    * `useValue` takes the `path` to the active element and the specific `attribute` name (e.g., `'width'`).
+    * It then uses Lodash's `_.get(mjmlJson, path)` to safely retrieve the current value of that `attribute` from the `mjmlJson`.
+
+5.  **Dynamic Rendering of Attribute Controls**:
+    * Each `Mods/*` component (e.g., `Background.tsx`, `WidthHeight.tsx`) checks its own `visible` state (obtained from `useVisibility`).
+    * If `visible` is `true`, the component renders its specific UI control (e.g., an input field, a color picker, a dropdown), pre-populated with the current `value` retrieved from `useValue`.
+    * If `visible` is `false`, the component simply renders `null`, effectively hiding that attribute control from the Attributes Panel.
+
+6.  **Updating Attributes**:
+    * When a user modifies a value in an attribute control (e.g., types a new width into an input field), the component's `onChange` or `onBlur` handler is triggered.
+    * This handler then calls the **`UpdateValue` operation** (from `src/Utils/operations.ts`).
+    * `UpdateValue` finds the `active` element in `mjmlJson` using its `path`, modifies the specific `attribute` with the new `value`, and updates the global `mjmlJson` state using `_.set`.
+    * This update to `mjmlJson` triggers a re-render of the `View` canvas, immediately reflecting the changes in the email preview, and also records the action for undo/redo.
+
+This dynamic and modular approach ensures that the Attributes Panel is always contextual to the selected element, displaying only the relevant and editable properties.
+
+---
+
+## How to Add a New Attribute ➕
+
+Adding a new attribute involves a few key steps across different parts of the codebase: defining it as mutable, creating or updating its UI control, and ensuring the update mechanism functions correctly.
+
+### Workflow:
+
+1.  **Define the Attribute as "Mutable" in MJML JSON**:
+    * **Crucially**, for any component to expose an attribute for editing in the Attributes Panel, that attribute must be listed in its `mutableProperties` array within its MJML JSON definition (which is typically part of the `config` object in its `src/Components/` file, like `Text.tsx` or `Image.tsx`).
+    * **Example**: If you want to add a `line-height` attribute to an `mj-text` element:
+        * Locate the `config` object for `mj-text` (in `src/Components/Text.tsx`).
+        * Add `'line-height'` to the `properties` array (which is assigned to `mutableProperties`).
+        * Optionally, add a default value for `line-height` in the `assigned_default_values` object within the same file.
+
+        ```typescript
+        // src/Components/Text.tsx (Excerpt)
+        // prettier-ignore
+        const properties = [
+          'color', 'font-family', 'font-size', 'font-style', 'font-weight',
+          'height', 'text-decoration', 'text-transform', 'align',
+          'container-background-color', 'padding', 'padding-top', 'padding-bottom',
+          'padding-left', 'padding-right', 'css-class',
+          'line-height' // <--- ADD THE NEW ATTRIBUTE HERE
+        ];
+
+        // prettier-ignore
+        const assigned_default_values  = {
+          "color": "#000000", "font-size": "13px", "align": "center", "padding": "10px 25px",
+          "line-height": "1.5" // <--- OPTIONAL: ADD A DEFAULT VALUE HERE
+        };
+
+        export const Text = () => {
+          const config = {
+            tagName: "mj-text",
+            attributes: {
+              ...assigned_default_values,
+              // ... other specific attributes
+            },
+            mutableProperties: properties, // This array must now include 'line-height'
+            // ...
+          };
+          // ...
+        };
+        ```
+
+2.  **Create or Update a `Mods/` Component for the Attribute's UI**:
+    * You need a dedicated UI component within `src/Components/Mods/` that will render the input or control (e.g., text input, dropdown, color picker) for this new attribute.
+    * If the attribute is unique, create a new file (e.g., `src/Components/Mods/LineHeight.tsx`).
+    * If it naturally groups with existing attributes (e.g., `line-height` is font-related, so it could be added to `FontConfig.tsx` or a more general `TextProperties.tsx` if it existed), modify the relevant existing file.
+
+    * **Example (Creating `src/Components/Mods/LineHeight.tsx`):**
+
+        ```typescript
+        // src/Components/Mods/LineHeight.tsx
+        import { Form, Input } from "antd";
+        import { useValue, useVisibility } from "@/hooks/Attribute.hook"; // Assuming alias
+        import { useEditor } from "@/hooks/Editor.hook"; // Assuming alias
+        import { UpdateValue } from "@/utils/operations"; // Assuming alias
+
+        const ATTRIBUTE = 'line-height'; // Define the attribute name for this component
+
+        interface LineHeightProps {
+          activePath?: string; // Optional path for direct targeting (e.g., BodyAttributes)
+        }
+
+        export const LineHeight = ({ activePath }: LineHeightProps) => {
+          const { mjmlJson, setMjmlJson } = useEditor();
+
+          // 1. Use useVisibility to check if 'line-height' is mutable for the active element
+          const [visible, path] = useVisibility({ attribute: ATTRIBUTE, customPath: activePath });
+
+          // 2. Use useValue to get the current 'line-height' value from mjmlJson
+          const { getValue } = useValue({ path, visible, attribute: ATTRIBUTE });
+
+          // 3. Handle user input change and dispatch update to mjmlJson
+          const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            UpdateValue({
+              visible,        // Pass visibility state
+              path,           // Pass the element's path
+              mjmlJson,
+              setMjmlJson,
+              attribute: ATTRIBUTE, // The attribute to update
+              value: e.target.value, // The new value from the input
+            });
+          };
+
+          if (!visible) return null; // Don't render the control if the attribute is not applicable/mutable
+
+          return (
+            <Form layout="vertical">
+              <Form.Item label="Line Height">
+                <Input
+                  placeholder="e.g., 1.5 or 24px" // Placeholder text for user guidance
+                  value={getValue()}             // Controlled component: displays current value
+                  onChange={handleChange}        // Updates mjmlJson on change
+                />
+              </Form.Item>
+            </Form>
+          );
+        };
+        ```
+
+3.  **Integrate the New Mod Component into the Attributes Panel**:
+    * Finally, you need to import and render your new `Mods/*` component within the **`Attributes.tsx`** component (or `ColumnAttributes.tsx`, `BodyAttributes.tsx`, depending on its scope).
+    * `Attributes.tsx` will then display this new control whenever an element with `line-height` in its `mutableProperties` is selected.
+
+    ```typescript
+    // src/Components/Attributes.tsx (Excerpt)
+    import { LineHeight } from './Mods/LineHeight'; // <--- IMPORT YOUR NEW COMPONENT
+    // ... other imports
+
+    export const Attributes = () => {
+      // ...
+      return (
+        <SomeContainer>
+          {/* ... existing attribute sections */}
+
+          {/* Render your new LineHeight component */}
+          {/* It will automatically appear/disappear based on useVisibility */}
+          <LineHeight />
+
+          {/* You might conditionally render it based on active element type if LineHeight.tsx itself doesn't handle it.
+          {active?.className?.includes('identifier-mj-text') && <LineHeight />}
+          */}
+        </SomeContainer>
+      );
+    };
+    ```
